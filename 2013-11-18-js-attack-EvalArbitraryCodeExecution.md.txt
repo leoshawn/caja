@@ -1,0 +1,46 @@
+---
+layout: post
+title: "JavaScript攻击-通过Eval执行代码"
+description: ""
+category: ""
+tags: ["JavaScript安全"]
+---
+{% include JB/setup %}
+
+### 通过Eval和Function构造器来执行JS代码
+
+#### 效果
+可以执行任意的JavaScript代码。毫无安全限制
+
+#### 背景
+eval可以在当前的调用环境上下文中，通过传入参数作为他的程序来执行(ES3 15.1.2.1)
+Function constructor允许给定某一个string作为一个函数的body 他是在全局作用与下面执行的(ES3 section 15.3.2.1)
+
+EcmaScript 262 明确指定了，这个方法可以修改,这样我们是可以替换掉他的。比如
+
+```javascript
+    window.eval=undefined;
+```
+
+Function的constructor可以通过任意函数对象的'constructor'的属性来获取到。这就是比较麻烦且危险的了
+
+
+#### 案例
+
+**假设** 假设eval和Function构造器都是可以调用访问的(随意声明一个函数,这个函数的constructor属性可读，就可以获得Function的constructor)
+
+```javascript
+eval('alert("your cookie is " + document.cookie)');
+
+(new Function('alert("your cookie is " + document.cookie)'))();
+```
+
+#### 总结
+eval和函数构造器都可以执行代码,而且是不能保证作用域的，这毫无疑问是JavaScript中最危险的东西，所以我们要做的限制，如果这个api不能防止的话
+那么所有的安全措施都是徒劳，在caja中，eval是不在白名单之中，所以你根本不能使用。Function的constructor是不可读的，即只能内部我们使用，而用户的代码是无法读取的。
+
+
+
+#### 代码解读
+todo
+这个不需要过多解读，caja使用属性描述符来保证读写的配置，使用白名单机制来保证API的暴露
